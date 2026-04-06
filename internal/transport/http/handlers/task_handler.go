@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 
@@ -27,17 +28,29 @@ func (h *TaskHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	created, err := h.usecase.Create(r.Context(), taskusecase.CreateInput{
-		Title:       req.Title,
-		Description: req.Description,
-		Status:      req.Status,
+	recurrence := mapDTOToDomainRecurrence(req.Recurrence)
+
+	createdTasks, err := h.usecase.Create(r.Context(), taskusecase.CreateInput{
+		Title:          req.Title,
+		Description:    req.Description,
+		Status:         req.Status,
+		ScheduledDate:  req.ScheduledDate,
+		RecurrenceRule: recurrence,
 	})
 	if err != nil {
 		writeUsecaseError(w, err)
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, newTaskDTO(created))
+	if len(createdTasks) == 1 {
+		writeJSON(w, http.StatusCreated, newTaskDTO(&createdTasks[0]))
+	} else {
+		response := make([]taskDTO, 0, len(createdTasks))
+		for i := range createdTasks {
+			response = append(response, newTaskDTO(&createdTasks[i]))
+		}
+		writeJSON(w, http.StatusCreated, response)
+	}
 }
 
 func (h *TaskHandler) GetByID(w http.ResponseWriter, r *http.Request) {
@@ -98,7 +111,12 @@ func (h *TaskHandler) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *TaskHandler) List(w http.ResponseWriter, r *http.Request) {
-	tasks, err := h.usecase.List(r.Context())
+	query := r.URL.Query()
+
+	start, _ := time.Parse("2006-01-02", query.Get("start"))
+	end, _ := time.Parse("2006-01-02", query.Get("end"))
+
+	tasks, err := h.usecase.List(r.Context(), start, end)
 	if err != nil {
 		writeUsecaseError(w, err)
 		return
@@ -163,4 +181,25 @@ func writeJSON(w http.ResponseWriter, status int, payload any) {
 	w.WriteHeader(status)
 
 	_ = json.NewEncoder(w).Encode(payload)
+}
+
+func mapDTOToDomainRecurrence(dto *recurrenceDTO) *taskdomain.RecurrenceRule {
+	if dto == nil {
+		return nil
+	}
+
+	var parity *taskdomain.ParityType
+	if dto.Parity != nil {
+		p := taskdomain.ParityType(*dto.Parity)
+		parity = &p
+	}
+
+	return &taskdomain.RecurrenceRule{
+		RuleType:      taskdomain.RuleType(dto.Type),
+		IntervalDays:  dto.IntervalDays,
+		MonthlyDay:    dto.MonthlyDay,
+		Parity:        parity,
+		ValidUntil:    dto.ValidUntil,
+		SpecificDates: dto.SpecificDates,
+	}
 }
