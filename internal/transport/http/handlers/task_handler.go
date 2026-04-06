@@ -116,7 +116,10 @@ func (h *TaskHandler) List(w http.ResponseWriter, r *http.Request) {
 	start, _ := time.Parse("2006-01-02", query.Get("start"))
 	end, _ := time.Parse("2006-01-02", query.Get("end"))
 
-	tasks, err := h.usecase.List(r.Context(), start, end)
+	limit, _ := strconv.Atoi(query.Get("limit"))
+	offset, _ := strconv.Atoi(query.Get("offset"))
+
+	tasks, err := h.usecase.List(r.Context(), start, end, limit, offset)
 	if err != nil {
 		writeUsecaseError(w, err)
 		return

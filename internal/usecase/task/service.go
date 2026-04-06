@@ -9,6 +9,8 @@ import (
 	taskdomain "example.com/taskservice/internal/domain/task"
 )
 
+const MaxGenerationLimit = 100
+
 type Service struct {
 	repo Repository
 	now  func() time.Time
@@ -58,6 +60,11 @@ func (s *Service) Create(ctx context.Context, input CreateInput) ([]taskdomain.T
 		start := s.now()
 		end := start.AddDate(0, 1, 0)
 		dates := taskdomain.GenerateDates(*savedRule, start, end)
+
+		if len(dates) > MaxGenerationLimit {
+			return fmt.Errorf("%w: too many tasks generated (%d), maximum allowed is %d",
+				ErrInvalidInput, len(dates), MaxGenerationLimit)
+		}
 
 		if len(dates) == 0 {
 			return fmt.Errorf("%w: no dates generated for this rule", ErrInvalidInput)
@@ -130,16 +137,28 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 	return s.repo.Delete(ctx, id)
 }
 
-func (s *Service) List(ctx context.Context, start, end time.Time) ([]taskdomain.Task, error) {
+func (s *Service) List(ctx context.Context, start, end time.Time, limit, offset int) ([]taskdomain.Task, error) {
 	if start.IsZero() {
 		start = s.now()
 	}
 
 	if end.IsZero() {
-		end = start.AddDate(0, 0, 7)
+		end = start.AddDate(0, 0, 30)
 	}
 
-	return s.repo.List(ctx, start, end)
+	if limit <= 0 {
+		limit = 20
+	}
+
+	if limit > 100 {
+		limit = 100
+	}
+
+	if offset < 0 {
+		offset = 0
+	}
+
+	return s.repo.List(ctx, start, end, limit, offset)
 }
 
 func (s *Service) validateCreateInput(input CreateInput) (CreateInput, error) {

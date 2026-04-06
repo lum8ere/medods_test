@@ -205,12 +205,13 @@ func (r *Repository) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (r *Repository) List(ctx context.Context, start, end time.Time) ([]taskdomain.Task, error) {
+func (r *Repository) List(ctx context.Context, start, end time.Time, limit, offset int) ([]taskdomain.Task, error) {
 	const query = `
 		SELECT id, recurrence_rule_id, title, description, status, scheduled_date, created_at, updated_at
 		FROM tasks
 		WHERE scheduled_date >= $1 AND scheduled_date <= $2
 		ORDER BY scheduled_date ASC, id ASC
+		LIMIT $3 OFFSET $4
 	`
 
 	rows, err := r.db.Query(ctx, query, start, end)

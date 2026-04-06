@@ -14,7 +14,7 @@ type Repository interface {
 	GetByID(ctx context.Context, id int64) (*taskdomain.Task, error)
 	Update(ctx context.Context, task *taskdomain.Task) (*taskdomain.Task, error)
 	Delete(ctx context.Context, id int64) error
-	List(ctx context.Context, start, end time.Time) ([]taskdomain.Task, error)
+	List(ctx context.Context, start, end time.Time, limit, offset int) ([]taskdomain.Task, error)
 	WithinTransaction(ctx context.Context, fn func(repo Repository) error) error
 }
 
@@ -23,7 +23,7 @@ type Usecase interface {
 	GetByID(ctx context.Context, id int64) (*taskdomain.Task, error)
 	Update(ctx context.Context, id int64, input UpdateInput) (*taskdomain.Task, error)
 	Delete(ctx context.Context, id int64) error
-	List(ctx context.Context, start, end time.Time) ([]taskdomain.Task, error)
+	List(ctx context.Context, start, end time.Time, limit, offset int) ([]taskdomain.Task, error)
 }
 
 type CreateInput struct {
