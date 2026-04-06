@@ -214,7 +214,7 @@ func (r *Repository) List(ctx context.Context, start, end time.Time, limit, offs
 		LIMIT $3 OFFSET $4
 	`
 
-	rows, err := r.db.Query(ctx, query, start, end)
+	rows, err := r.db.Query(ctx, query, start, end, limit, offset)
 	if err != nil {
 		return nil, err
 	}
