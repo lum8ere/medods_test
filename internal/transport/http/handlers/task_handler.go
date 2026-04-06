@@ -149,15 +149,15 @@ func (h *TaskHandler) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 // List godoc
-// @Summary      Получить список задач
-// @Description  Возвращает список задач с фильтрацией по датам и пагинацией
+// @Summary      Список задач
+// @Description  Получить список задач с пагинацией и информацией о количестве
 // @Tags         tasks
 // @Produce      json
-// @Param        start   query     string  false  "Начало (YYYY-MM-DD)"
-// @Param        end     query     string  false  "Конец (YYYY-MM-DD)"
-// @Param        limit   query     int     false  "Лимит (default 20)"
+// @Param        start   query     string  false  "Дата начала"
+// @Param        end     query     string  false  "Дата конца"
+// @Param        limit   query     int     false  "Лимит"
 // @Param        offset  query     int     false  "Смещение"
-// @Success      200     {array}   taskDTO
+// @Success      200     {object}  taskListResponseDTO
 // @Router       /tasks [get]
 func (h *TaskHandler) List(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
@@ -168,18 +168,24 @@ func (h *TaskHandler) List(w http.ResponseWriter, r *http.Request) {
 	limit, _ := strconv.Atoi(query.Get("limit"))
 	offset, _ := strconv.Atoi(query.Get("offset"))
 
-	tasks, err := h.usecase.List(r.Context(), start, end, limit, offset)
+	tasks, total, err := h.usecase.List(r.Context(), start, end, limit, offset)
 	if err != nil {
 		writeUsecaseError(w, err)
 		return
 	}
 
-	response := make([]taskDTO, 0, len(tasks))
+	taskDTOs := make([]taskDTO, 0, len(tasks))
 	for i := range tasks {
-		response = append(response, newTaskDTO(&tasks[i]))
+		taskDTOs = append(taskDTOs, newTaskDTO(&tasks[i]))
 	}
 
-	writeJSON(w, http.StatusOK, response)
+	// Отдаем объект вместо массива
+	writeJSON(w, http.StatusOK, taskListResponseDTO{
+		Items:      taskDTOs,
+		TotalCount: total,
+		Limit:      limit,
+		Offset:     offset,
+	})
 }
 
 func getIDFromRequest(r *http.Request) (int64, error) {

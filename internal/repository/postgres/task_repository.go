@@ -205,9 +205,10 @@ func (r *Repository) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (r *Repository) List(ctx context.Context, start, end time.Time, limit, offset int) ([]taskdomain.Task, error) {
+func (r *Repository) List(ctx context.Context, start, end time.Time, limit, offset int) ([]taskdomain.Task, int64, error) {
 	const query = `
-		SELECT id, recurrence_rule_id, title, description, status, scheduled_date, created_at, updated_at
+		SELECT id, recurrence_rule_id, title, description, status, scheduled_date, created_at, updated_at,
+		       COUNT(*) OVER() as total_count -- Считаем общее кол-во без учета LIMIT
 		FROM tasks
 		WHERE scheduled_date >= $1 AND scheduled_date <= $2
 		ORDER BY scheduled_date ASC, id ASC
@@ -216,24 +217,29 @@ func (r *Repository) List(ctx context.Context, start, end time.Time, limit, offs
 
 	rows, err := r.db.Query(ctx, query, start, end, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
-	var tasks []taskdomain.Task
+	var (
+		tasks []taskdomain.Task
+		total int64
+	)
+
 	for rows.Next() {
-		task, err := scanTask(rows)
-		if err != nil {
-			return nil, err
+		var task taskdomain.Task
+		var status string
+		if err := rows.Scan(
+			&task.ID, &task.RecurrenceRuleID, &task.Title, &task.Description, &status,
+			&task.ScheduledDate, &task.CreatedAt, &task.UpdatedAt, &total,
+		); err != nil {
+			return nil, 0, err
 		}
-		tasks = append(tasks, *task)
+		task.Status = taskdomain.Status(status)
+		tasks = append(tasks, task)
 	}
 
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return tasks, nil
+	return tasks, total, nil
 }
 
 type taskScanner interface {

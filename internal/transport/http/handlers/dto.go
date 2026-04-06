@@ -49,3 +49,11 @@ func newTaskDTO(task *taskdomain.Task) taskDTO {
 		UpdatedAt:        task.UpdatedAt,
 	}
 }
+
+// @name TaskListResponse
+type taskListResponseDTO struct {
+	Items      []taskDTO `json:"items"`
+	TotalCount int64     `json:"total_count" example:"150"`
+	Limit      int       `json:"limit" example:"20"`
+	Offset     int       `json:"offset" example:"0"`
+}

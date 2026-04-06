@@ -137,7 +137,7 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 	return s.repo.Delete(ctx, id)
 }
 
-func (s *Service) List(ctx context.Context, start, end time.Time, limit, offset int) ([]taskdomain.Task, error) {
+func (s *Service) List(ctx context.Context, start, end time.Time, limit, offset int) ([]taskdomain.Task, int64, error) {
 	if start.IsZero() {
 		start = s.now()
 	}
