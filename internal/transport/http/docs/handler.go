@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-//go:embed openapi.json
+//go:embed swagger.json
 var openAPISpec embed.FS
 
 type Handler struct {
@@ -13,7 +13,7 @@ type Handler struct {
 }
 
 func NewHandler() *Handler {
-	spec, err := openAPISpec.ReadFile("openapi.json")
+	spec, err := openAPISpec.ReadFile("swagger.json")
 	if err != nil {
 		panic(err)
 	}

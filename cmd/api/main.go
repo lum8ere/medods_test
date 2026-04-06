@@ -13,11 +13,17 @@ import (
 	infrastructurepostgres "example.com/taskservice/internal/infrastructure/postgres"
 	postgresrepo "example.com/taskservice/internal/repository/postgres"
 	transporthttp "example.com/taskservice/internal/transport/http"
+	_ "example.com/taskservice/internal/transport/http/docs"
 	swaggerdocs "example.com/taskservice/internal/transport/http/docs"
 	httphandlers "example.com/taskservice/internal/transport/http/handlers"
 	"example.com/taskservice/internal/usecase/task"
 )
 
+// @title           Task Service API
+// @version         1.0.1
+// @description     CRUD API for tasks built with clean architecture.
+// @host            localhost:8080
+// @BasePath        /api/v1
 func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,

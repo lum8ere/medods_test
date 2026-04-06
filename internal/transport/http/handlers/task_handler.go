@@ -21,6 +21,16 @@ func NewTaskHandler(usecase taskusecase.Usecase) *TaskHandler {
 	return &TaskHandler{usecase: usecase}
 }
 
+// Create godoc
+// @Summary      Создать задачу
+// @Description  Создает одну задачу или серию периодических задач на основе правила
+// @Tags         tasks
+// @Accept       json
+// @Produce      json
+// @Param        task  body      taskMutationDTO  true  "Данные задачи"
+// @Success      201   {object}  taskDTO
+// @Failure      400   {object}  map[string]string
+// @Router       /tasks [post]
 func (h *TaskHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req taskMutationDTO
 	if err := decodeJSON(r, &req); err != nil {
@@ -53,6 +63,15 @@ func (h *TaskHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// GetByID godoc
+// @Summary      Получить задачу
+// @Description  Получить подробную информацию о конкретной задаче по её ID
+// @Tags         tasks
+// @Produce      json
+// @Param        id   path      int  true  "Task ID"
+// @Success      200  {object}  taskDTO
+// @Failure      404  {object}  map[string]string "Задача не найдена"
+// @Router       /tasks/{id} [get]
 func (h *TaskHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id, err := getIDFromRequest(r)
 	if err != nil {
@@ -69,6 +88,17 @@ func (h *TaskHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, newTaskDTO(task))
 }
 
+// Update godoc
+// @Summary      Обновить задачу
+// @Description  Изменить заголовок, описание, статус или дату конкретной задачи
+// @Tags         tasks
+// @Accept       json
+// @Produce      json
+// @Param        id       path      int              true  "Task ID"
+// @Param        request  body      taskMutationDTO  true  "Новые данные"
+// @Success      200      {object}  taskDTO
+// @Failure      404      {object}  map[string]string "Задача не найдена"
+// @Router       /tasks/{id} [put]
 func (h *TaskHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id, err := getIDFromRequest(r)
 	if err != nil {
@@ -95,6 +125,14 @@ func (h *TaskHandler) Update(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, newTaskDTO(updated))
 }
 
+// Delete godoc
+// @Summary      Удалить задачу
+// @Description  Удалить конкретный экземпляр задачи из системы
+// @Tags         tasks
+// @Param        id   path      int  true  "Task ID"
+// @Success      204  "Без контента"
+// @Failure      404  {object}  map[string]string "Задача не найдена"
+// @Router       /tasks/{id} [delete]
 func (h *TaskHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, err := getIDFromRequest(r)
 	if err != nil {
@@ -110,6 +148,17 @@ func (h *TaskHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// List godoc
+// @Summary      Получить список задач
+// @Description  Возвращает список задач с фильтрацией по датам и пагинацией
+// @Tags         tasks
+// @Produce      json
+// @Param        start   query     string  false  "Начало (YYYY-MM-DD)"
+// @Param        end     query     string  false  "Конец (YYYY-MM-DD)"
+// @Param        limit   query     int     false  "Лимит (default 20)"
+// @Param        offset  query     int     false  "Смещение"
+// @Success      200     {array}   taskDTO
+// @Router       /tasks [get]
 func (h *TaskHandler) List(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 

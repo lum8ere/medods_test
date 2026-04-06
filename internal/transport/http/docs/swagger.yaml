@@ -1,0 +1,124 @@
+basePath: /api/v1
+definitions:
+  example_com_taskservice_internal_domain_task.Status:
+    enum:
+    - new
+    - in_progress
+    - done
+    type: string
+    x-enum-varnames:
+    - StatusNew
+    - StatusInProgress
+    - StatusDone
+  internal_transport_http_handlers.recurrenceDTO:
+    properties:
+      interval_days:
+        type: integer
+      monthly_day:
+        type: integer
+      parity:
+        type: string
+      specific_dates:
+        items:
+          type: string
+        type: array
+      type:
+        type: string
+      valid_until:
+        type: string
+    type: object
+  internal_transport_http_handlers.taskDTO:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      status:
+        $ref: '#/definitions/example_com_taskservice_internal_domain_task.Status'
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  internal_transport_http_handlers.taskMutationDTO:
+    properties:
+      description:
+        type: string
+      recurrence:
+        $ref: '#/definitions/internal_transport_http_handlers.recurrenceDTO'
+      scheduled_date:
+        type: string
+      status:
+        $ref: '#/definitions/example_com_taskservice_internal_domain_task.Status'
+      title:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: CRUD API for tasks built with clean architecture.
+  title: Task Service API
+  version: 1.0.1
+paths:
+  /tasks:
+    get:
+      description: Возвращает список задач с фильтрацией по датам и пагинацией
+      parameters:
+      - description: Начало (YYYY-MM-DD)
+        in: query
+        name: start
+        type: string
+      - description: Конец (YYYY-MM-DD)
+        in: query
+        name: end
+        type: string
+      - description: Лимит (default 20)
+        in: query
+        name: limit
+        type: integer
+      - description: Смещение
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/internal_transport_http_handlers.taskDTO'
+            type: array
+      summary: Получить список задач
+      tags:
+      - tasks
+    post:
+      consumes:
+      - application/json
+      description: Создает одну задачу или серию периодических задач на основе правила
+      parameters:
+      - description: Данные задачи
+        in: body
+        name: task
+        required: true
+        schema:
+          $ref: '#/definitions/internal_transport_http_handlers.taskMutationDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_transport_http_handlers.taskDTO'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Создать задачу
+      tags:
+      - tasks
+swagger: "2.0"
