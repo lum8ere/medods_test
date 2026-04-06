@@ -80,11 +80,11 @@ type config struct {
 func loadConfig() config {
 	cfg := config{
 		HTTPAddr:    envOrDefault("HTTP_ADDR", ":8080"),
-		DatabaseDSN: envOrDefault("DATABASE_DSN", "postgres://postgres:postgres@localhost:5432/taskservice?sslmode=disable"),
+		DatabaseDSN: envOrDefault("DATABASE_URL", ""),
 	}
 
 	if cfg.DatabaseDSN == "" {
-		panic(fmt.Errorf("DATABASE_DSN is required"))
+		panic(fmt.Errorf("DATABASE_URL is required"))
 	}
 
 	return cfg
